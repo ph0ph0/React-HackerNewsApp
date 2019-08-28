@@ -46,9 +46,9 @@ class App extends Component {
     console.log(`Setting search top stories`)
 
     // Consider `const pageNumber = (results && results.page) || 0`. This means, if results and results.page is not null (or falsey),
-    // then use the results.page value, if either are null, use 0. Hence, the below expression means if results and results[searchKey]
-    // is not null, use the hits stored under this key. If they are null, use an empty array. && statements have precendence over
-    // other operators, hence bracketing the && statement or not makes no difference. 
+    // then use the results.page value (the latter of the two), if either are null, use 0. Hence, the below expression means if
+    // results and results[searchKey] is not null, use the hits stored under this key. If they are null, use an empty array. 
+    // && statements have precendence over other operators, hence bracketing the && statement or not makes no difference. 
     const oldHits = (results && results[searchKey]) ? results[searchKey].hits : []
 
     const updatedHits = [...oldHits, ...hits]
@@ -72,6 +72,7 @@ class App extends Component {
   onSearchSubmit(event) {
     const { searchTerm } = this.state
 
+    // When the state.searchKey changes, the Table is re-rendered as the hits fed to it depends on this property.
     this.setState({ searchKey: searchTerm})
 
     if (this.needsToSearchTopStories(searchTerm)) {
@@ -167,10 +168,10 @@ class App extends Component {
   }
 }
 
-const PlusButton = ({ clickAction }) => {
+const PlusButton = ({ clickAction, clickValue }) => {
   return (
-    <button onClick = {clickAction}>
-      +1
+    <button onClick = {() => {clickAction(clickValue)}}>
+      +{clickValue}
     </button>
   )
 }
@@ -195,8 +196,8 @@ const ContentManager = () => {
 
   var [count, setCount] = useState(0)
 
-  const incrementCounter = () => {
-    setCount(count + 1)
+  const incrementCounter = (incrementValue) => {
+    setCount(count + incrementValue)
   }
 
   const resetCounter = () => {
@@ -205,12 +206,22 @@ const ContentManager = () => {
 
   return (
     <>
-    <PlusButton clickAction = {incrementCounter} />
+    <PlusButton 
+    clickAction = {incrementCounter}
+    clickValue = {1}
+     />
+    <PlusButton
+    clickAction = {incrementCounter}
+    clickValue = {5}
+    />
+    <PlusButton 
+    clickAction = {incrementCounter} 
+    clickValue = {10}
+    />
     <Display content= {count} />
     <ResetButton clickAction = {resetCounter} />
     </>
   )
-
 }
 
 
