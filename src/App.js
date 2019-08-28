@@ -19,10 +19,22 @@ class App extends Component {
       searchKey: '',
       searchTerm: DEFAULT_QUERY
     }
+    this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this)
     this.searchTopStories = this.searchTopStories.bind(this)
     this.onDismiss = this.onDismiss.bind(this)
     this.onSearchChange = this.onSearchChange.bind(this)
     this.onSearchSubmit = this.onSearchSubmit.bind(this)
+  }
+
+  needsToSearchTopStories(searchTerm) {
+
+    if (!this.state.results[searchTerm]) {
+      console.log(`Search term isn't cached, will search API now`)
+    } else {
+      console.log(`Search term is cached, will retrieve from cache`)
+    }
+
+    return !this.state.results[searchTerm]
   }
 
   setSearchTopStories(json) {
@@ -37,9 +49,7 @@ class App extends Component {
     // then use the results.page value, if either are null, use 0. Hence, the below expression means if results and results[searchKey]
     // is not null, use the hits stored under this key. If they are null, use an empty array. && statements have precendence over
     // other operators, hence bracketing the && statement or not makes no difference. 
-    const oldHits = (results && results[searchKey]) ? results[searchKey] : []
-
-    console.log(`Setting search top stories2`)
+    const oldHits = (results && results[searchKey]) ? results[searchKey].hits : []
 
     const updatedHits = [...oldHits, ...hits]
 
@@ -48,7 +58,7 @@ class App extends Component {
     this.setState(
       {
         results: {
-          ...results, [searchKey] : updatedHits
+          ...results, [searchKey] : {hits: updatedHits, page}
         }
       }
     )
@@ -64,7 +74,10 @@ class App extends Component {
 
     this.setState({ searchKey: searchTerm})
 
-    this.searchTopStories(searchTerm)
+    if (this.needsToSearchTopStories(searchTerm)) {
+      this.searchTopStories(searchTerm)
+    }
+
     event.preventDefault()
   }
 
@@ -72,13 +85,13 @@ class App extends Component {
     console.log(`Dismissing id: ${id}`)
 
     const { searchKey, results } = this.state
-    const hits = results[searchKey]
+    const { hits, page }  = results[searchKey]
 
     const isNotID = item => item.objectID !== id
     const updatedHits = hits.filter(isNotID)
     this.setState(
       {
-        results: {...results, [searchKey]: updatedHits}
+        results: {...results, [searchKey]: {hits: updatedHits, page}}
       }
       )
   }
@@ -110,10 +123,11 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, results, searchKey, page } = this.state
-    const pageNumber = (results && page) || 0
+    const { searchTerm, results, searchKey } = this.state
 
-    const hits = (results && results[searchKey]) || []
+    const pageNumber = ( results && results[searchKey] && results[searchKey].page) || 0
+
+    const hits = (results && results[searchKey] && results[searchKey].hits) || []
 
     return (
       <div className = "page">
