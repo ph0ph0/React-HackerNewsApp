@@ -1,6 +1,7 @@
 import React, { Component, useState } from 'react';
 import './App.css';
 import axios from 'axios'
+import PropTypes from 'prop-types'
 
 const DEFAULT_QUERY = `redux`
 const DEFAULT_HITSPERPAGE = '100'
@@ -11,6 +12,8 @@ const PARAM_PAGE = `page=`
 const PARAM_HITSPERPAGE = 'hitsPerPage='
 
 class App extends Component {
+
+  _isMounted = false
 
   constructor(props) {
     super(props) 
@@ -108,7 +111,9 @@ class App extends Component {
     axios(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
       .then((result) => {
         console.log(`No of hits in fetch response: ${result.data.hits.length}`)
-        this.setSearchTopStories(result.data)
+        if (this._isMounted) {
+          this.setSearchTopStories(result.data)
+        }
       })
       .catch(error => {
         console.log(`Fetch failed: ${error.message}`)
@@ -121,11 +126,17 @@ class App extends Component {
   componentDidMount() {
     const { searchTerm } = this.state
 
+    this._isMounted = true
+
     console.log(`Search term in cDM: ${searchTerm}`)
 
     this.setState({searchKey: searchTerm})
 
     this.searchTopStories(searchTerm)
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false
   }
 
   render() {
@@ -188,6 +199,11 @@ const PlusButton = ({ clickAction, clickValue }) => {
   )
 }
 
+PlusButton.propTypes = {
+  clickAction: PropTypes.func.isRequired,
+  clickValue: PropTypes.number.isRequired
+}
+
 const ResetButton = ({clickAction}) => {
   return (
     <button onClick = {clickAction}>
@@ -196,12 +212,20 @@ const ResetButton = ({clickAction}) => {
   )
 }
 
+ResetButton.propTypes = {
+  clickAction: PropTypes.func.isRequired
+}
+
 const Display = ({ content }) => {
   return (
     <pre>
       {content}
     </pre>
   )
+}
+
+Display.propTypes = {
+  content: PropTypes.number
 }
 
 const ContentManager = () => {
@@ -274,6 +298,11 @@ const Table = ({hits, onDismiss}) => {
     )
   }
 
+  Table.propTypes = {
+    hits: PropTypes.arrayOf(PropTypes.object).isRequired,
+    onDismiss: PropTypes.func
+  }
+
 
 function Button({ onClick, className, children }) {
 
@@ -286,7 +315,12 @@ function Button({ onClick, className, children }) {
           {children}
         </button>
       )
-  
+}
+
+Button.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  className: PropTypes.string,
+  children: PropTypes.node
 }
 
 function Search( { value, onChange, onSubmit, children } ) {
@@ -305,6 +339,13 @@ function Search( { value, onChange, onSubmit, children } ) {
         </button>
       </form>
     )
+}
+
+Search.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  children: PropTypes.node
 }
 
 class Header extends Component {
@@ -333,6 +374,14 @@ const TextArea = ({ rows, columns, placeholder, value, onChange }) => {
   )
 }
 
+TextArea.propTypes = {
+  rows: PropTypes.number.isRequired,
+  columns: PropTypes.number.isRequired,
+  placeholder: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired
+}
+
 const CharacterCounter = ({ input, maxCount }) => {
 
   console.log(`CharNo: ${input.length}`)
@@ -346,6 +395,11 @@ const CharacterCounter = ({ input, maxCount }) => {
       Characters remaining: {outputVal()}
     </div>
   )
+}
+
+CharacterCounter.propTypes = {
+  input: PropTypes.string.isRequired,
+  maxCount: PropTypes.number.isRequired
 }
 
 const CharacterCounterTextArea = ({ rows, columns, placeholder, maxCount }) => {
@@ -376,6 +430,13 @@ const CharacterCounterTextArea = ({ rows, columns, placeholder, maxCount }) => {
         </div>
       </div>
     )
+  }
+
+  CharacterCounterTextArea.propTypes = {
+    rows: PropTypes.number.isRequired,
+    columns: PropTypes.number.isRequired,
+    placeholder: PropTypes.string.isRequired,
+    maxCount: PropTypes.number.isRequired
   }
 
 
