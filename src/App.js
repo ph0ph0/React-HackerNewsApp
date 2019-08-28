@@ -136,10 +136,11 @@ class App extends Component {
         text = "Hey!"
         />
         <ContentManager/>
-        <TextArea
-        rows = '5'
-        columns = '100'
-        placeholder = "Write here"
+        <CharacterCounterTextArea
+          rows = {5}
+          columns = {10}
+          placeholder = {"Write your text here..."}
+          maxCount = {20}
         />
         <div className = "interactions">
           <Search
@@ -170,7 +171,9 @@ class App extends Component {
 
 const PlusButton = ({ clickAction, clickValue }) => {
   return (
-    <button onClick = {() => {clickAction(clickValue)}}>
+    <button 
+    onClick = {() => {clickAction(clickValue)}}
+    >
       +{clickValue}
     </button>
   )
@@ -309,14 +312,62 @@ class Header extends Component {
   }
 }
 
-class TextArea extends Component {
-  render() {
+const TextArea = ({ rows, columns, placeholder, value, onChange }) => {
+  return (
+    <textarea 
+        rows = {rows} 
+        columns = {columns} 
+        placeholder={placeholder}
+        value = {value}
+        onChange = {onChange} 
+        />
+  )
+}
 
-    const { rows, columns, placeholder } = this.props
+const CharacterCounter = ({ input, maxCount }) => {
+
+  console.log(`CharNo: ${input.length}`)
+
+  const outputVal = () => {
+    return (input.length < maxCount) ? maxCount - input.length : `Over by ${Math.abs(maxCount - input.length)} characters`
+  }
+
+  return (
+    <div>
+      Characters remaining: {outputVal()}
+    </div>
+  )
+}
+
+const CharacterCounterTextArea = ({ rows, columns, placeholder, maxCount }) => {
+
+  // useState react hook provides state for function components via a getter and setter
+  var [inputValue, setInputValue] = useState("")
+
+  // called each time the onChange event handler of the text area is called ie each time characters are entered
+  const handleChange = (event) => {
+    const element = event.target
+    setInputValue(element.value)
+  }
+
     return (
-      <textarea rows = {rows} columns={columns} placeholder={placeholder} />
+      <div>
+        <TextArea 
+        rows = {rows} 
+        columns={columns} 
+        placeholder={placeholder}
+        value = {inputValue}
+        onChange = {handleChange} 
+        />
+        <div>
+          <CharacterCounter
+          input = {inputValue}
+          maxCount = {maxCount}
+          />
+        </div>
+      </div>
     )
   }
-}
+
 
 export default App;
