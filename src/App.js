@@ -1,26 +1,297 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { Component, useState } from 'react';
 import './App.css';
 
-function App() {
+const DEFAULT_QUERY = `redux`
+const DEFAULT_HITSPERPAGE = '100'
+const PATH_BASE = `https://hn.algolia.com/api/v1`
+const PATH_SEARCH = `/search`
+const PARAM_SEARCH = `query=`
+const PARAM_PAGE = `page=`
+const PARAM_HITSPERPAGE = 'hitsPerPage='
+
+class App extends Component {
+
+  constructor(props) {
+    super(props) 
+    this.state = {
+      results: null,
+      page: 0,
+      searchKey: '',
+      searchTerm: DEFAULT_QUERY
+    }
+    this.searchTopStories = this.searchTopStories.bind(this)
+    this.onDismiss = this.onDismiss.bind(this)
+    this.onSearchChange = this.onSearchChange.bind(this)
+    this.onSearchSubmit = this.onSearchSubmit.bind(this)
+  }
+
+  setSearchTopStories(json) {
+
+    const { hits, page } = json
+
+    const { searchKey, results} = this.state
+
+    console.log(`Setting search top stories`)
+
+    // Consider `const pageNumber = (results && results.page) || 0`. This means, if results and results.page is not null (or falsey),
+    // then use the results.page value, if either are null, use 0. Hence, the below expression means if results and results[searchKey]
+    // is not null, use the hits stored under this key. If they are null, use an empty array. && statements have precendence over
+    // other operators, hence bracketing the && statement or not makes no difference. 
+    const oldHits = (results && results[searchKey]) ? results[searchKey] : []
+
+    console.log(`Setting search top stories2`)
+
+    const updatedHits = [...oldHits, ...hits]
+
+    console.log(`Number of hits when setting top stories state: ${updatedHits.length}, pageNo.: ${page}`)
+
+    this.setState(
+      {
+        results: {
+          ...results, [searchKey] : updatedHits
+        }
+      }
+    )
+  }
+
+  onSearchChange = e => {
+    this.setState({ searchTerm: e.target.value });
+  };
+
+
+  onSearchSubmit(event) {
+    const { searchTerm } = this.state
+
+    this.setState({ searchKey: searchTerm})
+
+    this.searchTopStories(searchTerm)
+    event.preventDefault()
+  }
+
+  onDismiss(id) {
+    console.log(`Dismissing id: ${id}`)
+
+    const { searchKey, results } = this.state
+    const hits = results[searchKey]
+
+    const isNotID = item => item.objectID !== id
+    const updatedHits = hits.filter(isNotID)
+    this.setState(
+      {
+        results: {...results, [searchKey]: updatedHits}
+      }
+      )
+  }
+
+  searchTopStories(searchTerm, page = 0) {
+
+    console.log(`Search term in sTS: ${searchTerm}`)
+
+    console.log(`Visiting: ${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
+
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
+      .then(response => response.json())
+      .then((json) => {
+        console.log(`No of hits in fetch response: ${json.hits.length}`)
+        this.setSearchTopStories(json)
+      })
+      .catch(error => console.log(`Fetch failed: ${error.message}`))
+
+  }
+
+  componentDidMount() {
+    const { searchTerm } = this.state
+
+    console.log(`Search term in cDM: ${searchTerm}`)
+
+    this.setState({searchKey: searchTerm})
+
+    this.searchTopStories(searchTerm)
+  }
+
+  render() {
+    const { searchTerm, results, searchKey, page } = this.state
+    const pageNumber = (results && page) || 0
+
+    const hits = (results && results[searchKey]) || []
+
+    return (
+      <div className = "page">
+        <Header 
+        text = "Hey!"
+        />
+        <ContentManager/>
+        <TextArea
+        rows = '5'
+        columns = '100'
+        placeholder = "Write here"
+        />
+        <div className = "interactions">
+          <Search
+            value = {searchTerm}
+            onChange = {this.onSearchChange}
+            onSubmit = {this.onSearchSubmit}
+          >
+            Search
+          </Search>
+        </div>
+        { 
+          results ? 
+          <Table
+         hits={hits} 
+         onDismiss={this.onDismiss}
+         />
+         : null
+        }
+        <div className = "interactions">
+        <Button onClick= {() => this.searchTopStories(searchKey, pageNumber + 1)}>
+          More
+        </Button>
+      </div>
+      </div>
+    )
+  }
+}
+
+const PlusButton = ({ clickAction }) => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <button onClick = {clickAction}>
+      +1
+    </button>
+  )
+}
+
+const ResetButton = ({clickAction}) => {
+  return (
+    <button onClick = {clickAction}>
+      Reset
+    </button>
+  )
+}
+
+const Display = ({ content }) => {
+  return (
+    <pre>
+      {content}
+    </pre>
+  )
+}
+
+const ContentManager = () => {
+
+  var [count, setCount] = useState(0)
+
+  const incrementCounter = () => {
+    setCount(count + 1)
+  }
+
+  const resetCounter = () => {
+    setCount(count = 0)
+  }
+
+  return (
+    <>
+    <PlusButton clickAction = {incrementCounter} />
+    <Display content= {count} />
+    <ResetButton clickAction = {resetCounter} />
+    </>
+  )
+
+}
+
+
+const Table = ({hits, onDismiss}) => {
+
+    return (
+      <div className="table">
+        
+        {hits.map(item => 
+          <div key={item.objectID} className="table-row">
+            <span style = {{ width: '40%'}}>
+              <a href={item.url}>
+                {item.title} 
+              </a>
+            </span>
+            <span style = {{ width: '30%'}}>
+              {item.author}
+            </span>
+            <span style = {{ width: '10%'}}>
+              {item.num_comments}
+            </span>
+            <span style = {{ width: '10%'}}>
+              {item.points}
+            </span>
+            <span style = {{ width: '10%'}}>
+              <Button 
+                onClick={() => 
+                onDismiss(item.objectID)}
+                className="button-inline"
+                >
+                Dismiss
+              </Button>
+            </span>
+          </div>
+        
+      )}
+      </div>
+    )
+  }
+
+
+function Button({ onClick, className, children }) {
+
+      return (
+        <button 
+          onClick = {onClick}
+          className = {className}
+          type = "button" 
         >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+          {children}
+        </button>
+      )
+  
+}
+
+function Search( { value, onChange, onSubmit, children } ) {
+
+    return (
+      <form onSubmit = {onSubmit} > 
+        <input 
+        type = "text"
+        value = {value}
+        onChange = {onChange}
+        />
+        <button 
+          type = "submit"
+        >
+          {children}
+        </button>
+      </form>
+    )
+}
+
+class Header extends Component {
+
+  render() {
+
+    const { text } = this.props
+
+    return (
+      <h1>
+        {text}
+      </h1>
+    )
+  }
+}
+
+class TextArea extends Component {
+  render() {
+
+    const { rows, columns, placeholder } = this.props
+    return (
+      <textarea rows = {rows} columns={columns} placeholder={placeholder} />
+    )
+  }
 }
 
 export default App;
