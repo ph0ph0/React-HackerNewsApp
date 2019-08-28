@@ -1,5 +1,6 @@
 import React, { Component, useState } from 'react';
 import './App.css';
+import axios from 'axios'
 
 const DEFAULT_QUERY = `redux`
 const DEFAULT_HITSPERPAGE = '100'
@@ -17,7 +18,8 @@ class App extends Component {
       results: null,
       page: 0,
       searchKey: '',
-      searchTerm: DEFAULT_QUERY
+      searchTerm: DEFAULT_QUERY,
+      error: null
     }
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this)
     this.searchTopStories = this.searchTopStories.bind(this)
@@ -103,14 +105,17 @@ class App extends Component {
 
     console.log(`Visiting: ${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
 
-    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
-      .then(response => response.json())
-      .then((json) => {
-        console.log(`No of hits in fetch response: ${json.hits.length}`)
-        this.setSearchTopStories(json)
+    axios(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
+      .then((result) => {
+        console.log(`No of hits in fetch response: ${result.data.hits.length}`)
+        this.setSearchTopStories(result.data)
       })
-      .catch(error => console.log(`Fetch failed: ${error.message}`))
-
+      .catch(error => {
+        console.log(`Fetch failed: ${error.message}`)
+        this.setState(
+          {error}
+        )
+      })
   }
 
   componentDidMount() {
@@ -124,11 +129,19 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, results, searchKey } = this.state
+    const { searchTerm, results, searchKey, error } = this.state
 
     const pageNumber = ( results && results[searchKey] && results[searchKey].page) || 0
 
     const hits = (results && results[searchKey] && results[searchKey].hits) || []
+
+    if (error) {
+      return (
+        <p>
+          {`Something went wrong...${error}`}
+        </p>
+      )
+    }
 
     return (
       <div className = "page">
@@ -151,14 +164,10 @@ class App extends Component {
             Search
           </Search>
         </div>
-        { 
-          results ? 
           <Table
          hits={hits} 
          onDismiss={this.onDismiss}
          />
-         : null
-        }
         <div className = "interactions">
         <Button onClick= {() => this.searchTopStories(searchKey, pageNumber + 1)}>
           More
