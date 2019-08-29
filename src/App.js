@@ -22,7 +22,8 @@ class App extends Component {
       page: 0,
       searchKey: '',
       searchTerm: DEFAULT_QUERY,
-      error: null
+      error: null,
+      isLoading: false
     }
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this)
     this.searchTopStories = this.searchTopStories.bind(this)
@@ -64,7 +65,8 @@ class App extends Component {
       {
         results: {
           ...results, [searchKey] : {hits: updatedHits, page}
-        }
+        },
+        isLoading: false
       }
     )
   }
@@ -107,6 +109,12 @@ class App extends Component {
     console.log(`Search term in sTS: ${searchTerm}`)
 
     console.log(`Visiting: ${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
+
+    this.setState(
+      {
+        isLoading: true
+      }
+    )
 
     axios(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HITSPERPAGE}${DEFAULT_HITSPERPAGE}`)
       .then((result) => {
@@ -180,9 +188,13 @@ class App extends Component {
          onDismiss={this.onDismiss}
          />
         <div className = "interactions">
-        <Button onClick= {() => this.searchTopStories(searchKey, pageNumber + 1)}>
-          More
-        </Button>
+          {
+            (this.state.isLoading) ? 
+            <LoadingComponent/> :
+            <Button onClick= {() => this.searchTopStories(searchKey, pageNumber + 1)}>
+              More
+            </Button>
+          }
       </div>
       </div>
     )
@@ -196,6 +208,14 @@ const PlusButton = ({ clickAction, clickValue }) => {
     >
       +{clickValue}
     </button>
+  )
+}
+
+const LoadingComponent = () => {
+  return (
+    <div>
+      Loading...
+    </div>
   )
 }
 
