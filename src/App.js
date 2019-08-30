@@ -148,7 +148,7 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, results, searchKey, error } = this.state
+    const { searchTerm, results, searchKey, error, isLoading, page } = this.state
 
     const pageNumber = ( results && results[searchKey] && results[searchKey].page) || 0
 
@@ -188,13 +188,12 @@ class App extends Component {
          onDismiss={this.onDismiss}
          />
         <div className = "interactions">
-          {
-            (this.state.isLoading) ? 
-            <LoadingComponent/> :
-            <Button onClick= {() => this.searchTopStories(searchKey, pageNumber + 1)}>
-              More
-            </Button>
-          }
+          <ButtonWithLoading
+            isLoading = {isLoading}
+            onClick = {() => this.searchTopStories(searchKey, page + 1)}
+          >
+            More
+          </ButtonWithLoading>
       </div>
       </div>
     )
@@ -218,6 +217,16 @@ const LoadingComponent = () => {
     </div>
   )
 }
+
+const withLoading = (Component) => ({isLoading, ...rest}) => {
+  return (
+    isLoading ?
+    <LoadingComponent/> :
+    <Component {...rest} />
+  )
+}
+
+const ButtonWithLoading = withLoading(Button)
 
 PlusButton.propTypes = {
   clickAction: PropTypes.func.isRequired,
