@@ -32,22 +32,13 @@ class App extends Component {
       searchKey: '',
       searchTerm: DEFAULT_QUERY,
       error: null,
-      isLoading: false,
-      sortKey: 'NONE',
-      isSortReversed: false
+      isLoading: false
     }
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this)
     this.searchTopStories = this.searchTopStories.bind(this)
     this.onDismiss = this.onDismiss.bind(this)
     this.onSearchChange = this.onSearchChange.bind(this)
     this.onSearchSubmit = this.onSearchSubmit.bind(this)
-    this.onSort = this.onSort.bind(this)
-  }
-
-  onSort(sortKey) {
-
-    const isSortReversed = (sortKey === this.state.sortKey) && !this.state.isSortReversed
-    this.setState({sortKey, isSortReversed})
   }
 
   needsToSearchTopStories(searchTerm) {
@@ -204,9 +195,6 @@ class App extends Component {
           <Table
          hits={hits} 
          onDismiss={this.onDismiss}
-         sortKey = {sortKey}
-         onSort = {this.onSort}
-         isSortReversed = {isSortReversed}
          />
         <div className = "interactions">
           <ButtonWithLoading
@@ -311,10 +299,30 @@ const ContentManager = () => {
 }
 
 
-const Table = ({hits, onDismiss, sortKey, onSort, isSortReversed}) => {
+class Table extends Component {
 
-  const sortedList = SORTS[sortKey](hits)
-  const reverseSortedList = (isSortReversed) ? sortedList.reverse() : sortedList
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      sortKey: "NONE",
+      isSortReversed: false
+    }
+    this.onSort = this.onSort.bind(this)
+  }
+
+  onSort(sortKey) {
+
+    const isSortReversed = (sortKey === this.state.sortKey) && !this.state.isSortReversed
+    this.setState({sortKey, isSortReversed})
+  }
+
+  render() {
+
+    const {hits, onDismiss} = this.props
+
+    const sortedList = SORTS[this.state.sortKey](hits)
+    const reverseSortedList = (this.state.isSortReversed) ? sortedList.reverse() : sortedList
 
     return (
       <div className="table">
@@ -322,8 +330,8 @@ const Table = ({hits, onDismiss, sortKey, onSort, isSortReversed}) => {
           <span style={{width: '40%'}}>
             <Sort
               sortKey = {'TITLE'}
-              onSort = {onSort}
-              activeSortKey = {sortKey}
+              onSort = {this.onSort}
+              activeSortKey = {this.state.sortKey}
             >
               Title
             </Sort>
@@ -331,8 +339,8 @@ const Table = ({hits, onDismiss, sortKey, onSort, isSortReversed}) => {
           <span style={{width: '30%'}}>
             <Sort
               sortKey = {'AUTHOR'}
-              onSort = {onSort}
-              activeSortKey = {sortKey}
+              onSort = {this.onSort}
+              activeSortKey = {this.state.sortKey}
             >
               Author
             </Sort>
@@ -340,8 +348,8 @@ const Table = ({hits, onDismiss, sortKey, onSort, isSortReversed}) => {
           <span style={{width: '10%'}}>
             <Sort
               sortKey = {'COMMENTS'}
-              onSort = {onSort}
-              activeSortKey = {sortKey}
+              onSort = {this.onSort}
+              activeSortKey = {this.state.sortKey}
             >
               Comments
             </Sort>
@@ -349,8 +357,8 @@ const Table = ({hits, onDismiss, sortKey, onSort, isSortReversed}) => {
           <span style={{width: '10%'}}>
             <Sort
               sortKey = {'POINTS'}
-              onSort = {onSort}
-              activeSortKey = {sortKey}
+              onSort = {this.onSort}
+              activeSortKey = {this.state.sortKey}
             >
               Points
             </Sort>
@@ -390,6 +398,7 @@ const Table = ({hits, onDismiss, sortKey, onSort, isSortReversed}) => {
       </div>
     )
   }
+}
 
   Table.propTypes = {
     hits: PropTypes.arrayOf(PropTypes.object).isRequired,
