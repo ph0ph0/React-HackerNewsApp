@@ -157,7 +157,7 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, results, searchKey, error, isLoading, sortKey, isSortReversed } = this.state
+    const { searchTerm, results, searchKey, error, isLoading } = this.state
 
     const pageNumber = ( results && results[searchKey] && results[searchKey].page) || 0
 
